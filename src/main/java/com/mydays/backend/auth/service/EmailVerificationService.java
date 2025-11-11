@@ -46,12 +46,18 @@ public class EmailVerificationService {
         String code = generate6Digit();
         String hash = SecurityCryptoConfig.bcrypt(code);
 
-        EmailVerification ev = new EmailVerification();
-        ev.setEmail(email);
-        ev.setCodeHash(hash);
-        ev.setExpiresAt(LocalDateTime.now().plusMinutes(codeTtlMinutes));
+        // 🔁 세터 대신 빌더로 새 레코드 생성
+        EmailVerification ev = EmailVerification.builder()
+                .email(email)
+                .codeHash(hash)
+                .expiresAt(LocalDateTime.now().plusMinutes(codeTtlMinutes))
+                .used(false)        // 엔티티에 필드가 있다면 명시
+                .attempts(0)        // 엔티티에 필드가 있다면 명시
+                .build();
+
         repo.save(ev);
 
+        // 메일 발송
         mail.sendVerificationCode(email, code);
     }
 
